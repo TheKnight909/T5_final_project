@@ -6,7 +6,7 @@ import tempfile
 import time
 
 # Load the YOLO model
-model = YOLO('yolov8_Medium.pt')  # Ensure the model file is in the root directory of your Space
+model = YOLO('yolov8_motorbikes_detection_s.pt')  # Ensure the model file is in the root directory of your Space
 
 def run_yolo(image):
     # Run the model on the image and get results
