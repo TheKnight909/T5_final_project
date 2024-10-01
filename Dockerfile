@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ENV OTHER_CONFIG=<other_configuration>
 
 # Step 7: Expose the port your app runs on
-EXPOSE 8501
+EXPOSE 8080
 
 # Step 8: Command to run your application
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
