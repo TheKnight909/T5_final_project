@@ -2,32 +2,47 @@ import streamlit as st
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import time  # Missing import for time
+import tempfile
+import os
 
 # Load the YOLO model
-model = YOLO('yolov8_Medium.pt')  # Ensure the model file is in the root directory of your Space
+@st.cache_resource
+def load_model():
+    try:
+        model = YOLO('yolov8_Medium.pt')  # Ensure the model file is in the root directory of your Space
+        return model
+    except Exception as e:
+        st.error(f"Error loading the model: {e}")
+        return None
+
+model = load_model()
 
 def run_yolo(image):
     # Run the model on the image and get results
-    results = model(image)
-    return results
+    if model:
+        results = model(image)
+        return results
+    else:
+        st.error("YOLO model is not loaded.")
+        return None
 
 def process_results(results, image):
-    # Draw bounding boxes and labels on the image
-    boxes = results[0].boxes  # Get boxes from results
-    for box in boxes:
-        # Get the box coordinates and label
-        x1, y1, x2, y2 = map(int, box.xyxy[0])  # Convert to integer coordinates
-        conf = box.conf[0]  # Confidence score
-        cls = int(box.cls[0])  # Class index
-        label = model.names[cls]  # Get class name from index
-        
-        # Draw rectangle and label on the image
-        cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
-        cv2.putText(image, f"{label} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+    if results:
+        # Draw bounding boxes and labels on the image
+        boxes = results[0].boxes  # Get boxes from results
+        for box in boxes:
+            # Get the box coordinates and label
+            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Convert to integer coordinates
+            conf = box.conf[0]  # Confidence score
+            cls = int(box.cls[0])  # Class index
+            label = model.names[cls]  # Get class name from index
+
+            # Draw rectangle and label on the image
+            cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
+            cv2.putText(image, f"{label} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
     return image
-
-import tempfile
 
 def process_video(uploaded_file):
     # Create a temporary file to save the uploaded video
