@@ -2,45 +2,30 @@ import streamlit as st
 import cv2
 import numpy as np
 from ultralytics import YOLO
-import time  # Missing import for time
 import tempfile
-import os
+import time
 
 # Load the YOLO model
-@st.cache_resource
-def load_model():
-    try:
-        model = YOLO('yolov8_Medium.pt')  # Ensure the model file is in the root directory of your Space
-        return model
-    except Exception as e:
-        st.error(f"Error loading the model: {e}")
-        return None
-
-model = load_model()
+model = YOLO('yolov8_Medium.pt')  # Ensure the model file is in the root directory of your Space
 
 def run_yolo(image):
     # Run the model on the image and get results
-    if model:
-        results = model(image)
-        return results
-    else:
-        st.error("YOLO model is not loaded.")
-        return None
+    results = model(image)
+    return results
 
 def process_results(results, image):
-    if results:
-        # Draw bounding boxes and labels on the image
-        boxes = results[0].boxes  # Get boxes from results
-        for box in boxes:
-            # Get the box coordinates and label
-            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Convert to integer coordinates
-            conf = box.conf[0]  # Confidence score
-            cls = int(box.cls[0])  # Class index
-            label = model.names[cls]  # Get class name from index
-
-            # Draw rectangle and label on the image
-            cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
-            cv2.putText(image, f"{label} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+    # Draw bounding boxes and labels on the image
+    boxes = results[0].boxes  # Get boxes from results
+    for box in boxes:
+        # Get the box coordinates and label
+        x1, y1, x2, y2 = map(int, box.xyxy[0])  # Convert to integer coordinates
+        conf = box.conf[0]  # Confidence score
+        cls = int(box.cls[0])  # Class index
+        label = model.names[cls]  # Get class name from index
+        
+        # Draw rectangle and label on the image
+        cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
+        cv2.putText(image, f"{label} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
     return image
 
@@ -115,14 +100,40 @@ def process_video(uploaded_file):
         video_bytes = f.read()
     st.download_button(label='Download Processed Video', data=video_bytes, file_name='processed_video.mp4', mime='video/mp4')
 
+def live_video_feed():
+    stframe = st.empty()  # Placeholder for the video stream in Streamlit
+    video = cv2.VideoCapture(0)  # Capture live video from the webcam
+
+    while True:
+        ret, frame = video.read()
+        if not ret:
+            break
+        
+        # Run YOLO model on the current frame
+        results = run_yolo(frame)
+        
+        # Process the results and draw boxes on the current frame
+        processed_frame = process_results(results, frame)
+        
+        # Display the processed frame in the Streamlit app
+        stframe.image(processed_frame, channels="BGR", use_column_width=True)
+        
+        # Stop the live feed when user clicks on the "Stop" button
+        if st.button("Stop"):
+            break
+
+    video.release()
+
 def main():
     st.title("Motorbike Violation Detection")
 
-    # Upload file
-    uploaded_file = st.file_uploader("Choose an image or video...", type=["jpg", "jpeg", "png", "mp4"])
+    # Create a selection box for input type
+    input_type = st.selectbox("Select Input Type", ("Image", "Video", "Live Feed"))
 
-    if uploaded_file is not None:
-        if uploaded_file.type in ["image/jpeg", "image/png", "image/jpg"]:
+    # Image or video file uploader
+    if input_type == "Image":
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+        if uploaded_file is not None:
             # Process the image
             image = np.array(cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), 1))
             results = run_yolo(image)
@@ -133,10 +144,15 @@ def main():
             # Display the processed image
             st.image(processed_image, caption='Detected Image', use_column_width=True)
 
-        elif uploaded_file.type == "video/mp4":
+    elif input_type == "Video":
+        uploaded_file = st.file_uploader("Choose a video...", type=["mp4"])
+        if uploaded_file is not None:
             # Process the video
-            process_video(uploaded_file)  # Process the video and save the output
-            
+            process_video(uploaded_file)
+
+    elif input_type == "Live Feed":
+        st.write("Live video feed from webcam. Press 'Stop' to stop the feed.")
+        live_video_feed()
 
 if __name__ == "__main__":
     main()
