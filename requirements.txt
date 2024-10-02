@@ -4,3 +4,6 @@ numpy
 ultralytics
 torch
 torchvision
+transformers  
+Pillow  
+huggingface-hub
