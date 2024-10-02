@@ -6,11 +6,20 @@ import tempfile
 import time
 from huggingface_hub import hf_hub_download
 
-
 def run_yolo(image):
     # Run the model on the image and get results
     results = model(image)
     return results
+
+# Color definitions for each class
+class_colors = {
+    0: (0, 255, 0),    # Green (Helmet)
+    1: (255, 0, 0),    # Blue (License Plate)
+    2: (0, 0, 255),    # Red (MotorbikeDelivery)
+    3: (255, 255, 0),  # Cyan (MotorbikeSport)
+    4: (255, 0, 255),  # Magenta (No Helmet)
+    5: (0, 255, 255),  # Yellow (Person)
+}
 
 def process_results(results, image):
     # Draw bounding boxes and labels on the image
@@ -22,11 +31,15 @@ def process_results(results, image):
         cls = int(box.cls[0])  # Class index
         label = model.names[cls]  # Get class name from index
         
-        # Draw rectangle and label on the image
-        cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
-        cv2.putText(image, f"{label} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        # Get the color for the current class
+        color = class_colors.get(cls, (255, 255, 255))  # Default to white if class not found
+        
+        # Draw rectangle and label on the image with the appropriate color
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)  # Draw bounding box
+        cv2.putText(image, f"{label} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)  # Draw label
 
     return image
+
 
 def process_video(uploaded_file):
     # Create a temporary file to save the uploaded video
@@ -149,7 +162,7 @@ def main():
             st.image(processed_image, caption='Detected Image', use_column_width=True)
 
     elif input_type == "Video":
-        uploaded_file = st.file_uploader("Choose a video...", type=["mp4"])
+        uploaded_file = st.file_uploader("Choose a video...", type=["mp4", "mov"])
         if uploaded_file is not None:
             # Process the video
             process_video(uploaded_file)
