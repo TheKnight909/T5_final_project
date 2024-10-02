@@ -121,6 +121,7 @@ def process_video_and_save(uploaded_file):
 def live_video_feed():
     stframe = st.empty()  # Placeholder for the video stream in Streamlit
     video = cv2.VideoCapture(0)  # Capture live video from the webcam
+    start_time = time.time()  # Start timer for live feed
 
     while True:
         ret, frame = video.read()
@@ -139,11 +140,16 @@ def live_video_feed():
         # Display the processed frame in the Streamlit app
         stframe.image(processed_frame_rgb, channels="RGB", use_column_width=True)
 
+        # Display the timer (elapsed time)
+        elapsed_time = time.time() - start_time
+        st.write(f"Elapsed Time: {elapsed_time:.2f} seconds")
+
         # Stop the live feed when the user clicks the "Stop" button
         if st.button("Stop"):
             break
 
     video.release()
+    st.stop()  # Stop the app from reloading after stopping the live feed
 
 
 def main():
