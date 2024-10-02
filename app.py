@@ -126,7 +126,7 @@ def live_video_feed():
 def main():
     model_file = hf_hub_download(repo_id="TheKnight115/Yolov8m", filename="yolov8_Medium.pt")
     
-    # Load the YOLO model
+    global model   
     model = YOLO(model_file)
     
     st.title("Motorbike Violation Detection")
