@@ -74,6 +74,10 @@ def process_video_and_save(uploaded_file):
     current_frame = 0
     start_time = time.time()  # Start the timer
 
+    # Initialize the progress bar in Streamlit
+    progress_bar = st.progress(0)
+    progress_text = st.empty()
+
     while True:
         ret, frame = video.read()
         if not ret:
@@ -90,6 +94,11 @@ def process_video_and_save(uploaded_file):
         frames.append(processed_frame_rgb)  # Save the processed frame
 
         current_frame += 1
+
+        # Update progress bar and percentage text
+        progress_percentage = int((current_frame / total_frames) * 100)
+        progress_bar.progress(progress_percentage)
+        progress_text.text(f"Processing frame {current_frame}/{total_frames} ({progress_percentage}%)")
 
     video.release()
 
