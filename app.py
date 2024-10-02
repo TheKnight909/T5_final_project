@@ -4,9 +4,8 @@ import numpy as np
 from ultralytics import YOLO
 import tempfile
 import time
+from huggingface_hub import hf_hub_download
 
-# Load the YOLO model
-model = YOLO('yolov8_motorbikes_detection_s.pt')  # Ensure the model file is in the root directory of your Space
 
 def run_yolo(image):
     # Run the model on the image and get results
@@ -125,6 +124,11 @@ def live_video_feed():
     video.release()
 
 def main():
+    model_file = hf_hub_download(repo_id="TheKnight115/Yolov8m", filename="yolov8_Medium.pt")
+    
+    # Load the YOLO model
+    model = YOLO(model_file)
+    
     st.title("Motorbike Violation Detection")
 
     # Create a selection box for input type
